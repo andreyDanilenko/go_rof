@@ -13,7 +13,7 @@ func main() {
 	str4, _ := unpack.Unpack("qwe\\5")
 	str5, _ := unpack.Unpack(`qwe\\\3`)
 	str6, _ := unpack.Unpack("aaф0b")
-	str7, _ := unpack.Unpack("")
+	str7, _ := unpack.Unpack("3a22bc")
 
 	fmt.Println("str1", str1)
 	fmt.Println("str2", str2)

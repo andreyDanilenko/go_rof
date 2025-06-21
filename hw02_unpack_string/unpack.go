@@ -19,6 +19,10 @@ func Unpack(s string) (string, error) {
 	for i := 0; i < length; i++ {
 		r := runes[i]
 
+		if isDigit(r) && i == 0 {
+			return "", ErrInvalidString
+		}
+
 		if escaped {
 			if !(r == '\\' || isDigit(r)) {
 				return "", ErrInvalidString
@@ -45,6 +49,11 @@ func Unpack(s string) (string, error) {
 			if isDigit(prev) && !(i >= 2 && runes[i-2] == '\\') {
 				return "", ErrInvalidString
 			}
+
+			// за цифрой не идет еще одна цифра
+			// if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
+			// 	return "", ErrInvalidString
+			// }
 
 			count, err := strconv.Atoi(string(r))
 			if err != nil {
