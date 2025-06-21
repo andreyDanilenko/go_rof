@@ -6,15 +6,12 @@ import (
 	"strings"
 )
 
-var (
-	ErrInvalidString = errors.New("invalid string")
-)
+var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(s string) (string, error) {
 	var builder strings.Builder
 	runes := []rune(s)
 	length := len(runes)
-
 	escaped := false
 	for i := 0; i < length; i++ {
 		r := runes[i]
@@ -38,20 +35,13 @@ func Unpack(s string) (string, error) {
 			continue
 		}
 
-		// если первый символ цифра, либо повторяется цифра
 		if isDigit(r) {
 			if i == 0 {
 				return "", ErrInvalidString
 			}
 
 			prev := runes[i-1]
-			// проверка: если предыдущий тоже был цифрой (и не был экранирован)
-			if isDigit(prev) && !(i >= 2 && runes[i-2] == '\\') {
-				return "", ErrInvalidString
-			}
-
-			// за цифрой не идет еще одна цифра
-			if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
+			if (isDigit(prev) && !(i >= 2 && runes[i-2] == '\\')) || (i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\')) {
 				return "", ErrInvalidString
 			}
 
@@ -61,14 +51,12 @@ func Unpack(s string) (string, error) {
 			}
 
 			if count == 0 {
-				// удаляем последний символ
 				output := []rune(builder.String())
 				builder.Reset()
 				builder.WriteString(string(output[:len(output)-1]))
 				continue
 			}
 
-			// повторить предыдущий символ count-1 раз (он уже записан 1 раз)
 			builder.WriteString(strings.Repeat(string(runes[i-1]), count-1))
 		} else {
 			builder.WriteRune(r)
