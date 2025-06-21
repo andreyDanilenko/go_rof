@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	unpack "github.com/andreyDanilenko/go_rof/hw02_unpack_string"
+	unpack "github.com/andreyDanilenko/go_rof/tree/master/hw02_unpack_string"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,6 +24,7 @@ func TestUnpack(t *testing.T) {
 		{input: `qwe\45`, expected: `qwe44444`},
 		{input: `qwe\\5`, expected: `qwe\\\\\`},
 		{input: `qwe\\\3`, expected: `qwe\3`},
+		{input: "d\n5abc", expected: "d\n\n\n\n\nabc"},
 	}
 
 	for _, tc := range tests {

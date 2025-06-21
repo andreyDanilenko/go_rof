@@ -1,4 +1,4 @@
-module github.com/andreyDanilenko/go_rof/hw02_unpack_string
+module github.com/andreyDanilenko/go_rof/tree/master/hw02_unpack_string
 
 go 1.23
 
