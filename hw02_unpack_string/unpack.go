@@ -51,9 +51,9 @@ func Unpack(s string) (string, error) {
 			}
 
 			// за цифрой не идет еще одна цифра
-			// if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
-			// 	return "", ErrInvalidString
-			// }
+			if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
+				return "", ErrInvalidString
+			}
 
 			count, err := strconv.Atoi(string(r))
 			if err != nil {

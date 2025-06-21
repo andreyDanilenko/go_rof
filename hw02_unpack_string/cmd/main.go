@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	unpack "github.com/andreyDanilenko/go_rof/tree/master/hw02_unpack_string"
+	unpack "github.com/andreyDanilenko/go_rof/hw02_unpack_string"
 )
 
 func main() {
