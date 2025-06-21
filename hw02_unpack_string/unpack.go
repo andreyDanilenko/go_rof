@@ -13,6 +13,7 @@ func Unpack(s string) (string, error) {
 	runes := []rune(s)
 	length := len(runes)
 	escaped := false
+
 	for i := 0; i < length; i++ {
 		r := runes[i]
 
@@ -21,11 +22,9 @@ func Unpack(s string) (string, error) {
 		}
 
 		if escaped {
-			if !(r == '\\' || isDigit(r)) {
-				return "", ErrInvalidString
+			if err := handleEscaped(r, &builder); err != nil {
+				return "", err
 			}
-
-			builder.WriteRune(r)
 			escaped = false
 			continue
 		}
@@ -36,31 +35,13 @@ func Unpack(s string) (string, error) {
 		}
 
 		if isDigit(r) {
-			if i == 0 {
-				return "", ErrInvalidString
+			if err := handleDigit(runes, i, &builder); err != nil {
+				return "", err
 			}
-
-			prev := runes[i-1]
-			if (isDigit(prev) && !(i >= 2 && runes[i-2] == '\\')) || (i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\')) {
-				return "", ErrInvalidString
-			}
-
-			count, err := strconv.Atoi(string(r))
-			if err != nil {
-				return "", ErrInvalidString
-			}
-
-			if count == 0 {
-				output := []rune(builder.String())
-				builder.Reset()
-				builder.WriteString(string(output[:len(output)-1]))
-				continue
-			}
-
-			builder.WriteString(strings.Repeat(string(runes[i-1]), count-1))
-		} else {
-			builder.WriteRune(r)
+			continue
 		}
+
+		builder.WriteRune(r)
 	}
 
 	if escaped {
@@ -72,4 +53,50 @@ func Unpack(s string) (string, error) {
 
 func isDigit(r rune) bool {
 	return r >= '0' && r <= '9'
+}
+
+func handleEscaped(r rune, builder *strings.Builder) error {
+	if !(r == '\\' || isDigit(r)) {
+		return ErrInvalidString
+	}
+	builder.WriteRune(r)
+	return nil
+}
+
+func handleDigit(runes []rune, i int, builder *strings.Builder) error {
+	if i == 0 {
+		return ErrInvalidString
+	}
+
+	length := len(runes)
+	curr := runes[i]
+	prev := runes[i-1]
+
+	// Если предыдущий символ — неэкранированная цифра
+	if isDigit(prev) && !(i >= 2 && runes[i-2] == '\\') {
+		return ErrInvalidString
+	}
+
+	// Если следующая цифра тоже цифра и неэкранирована
+	if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
+		return ErrInvalidString
+	}
+
+	count, err := strconv.Atoi(string(curr))
+	if err != nil {
+		return ErrInvalidString
+	}
+
+	if count == 0 {
+		output := []rune(builder.String())
+		if len(output) == 0 {
+			return ErrInvalidString
+		}
+		builder.Reset()
+		builder.WriteString(string(output[:len(output)-1]))
+		return nil
+	}
+
+	builder.WriteString(strings.Repeat(string(prev), count-1))
+	return nil
 }
