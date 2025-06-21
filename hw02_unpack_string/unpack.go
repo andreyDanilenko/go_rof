@@ -34,8 +34,8 @@ func Unpack(s string) (string, error) {
 			continue
 		}
 
+		// если первый символ цифра, либо повторяется цифра
 		if isDigit(r) {
-			// если первый символ - цифра, либо повторяется цифра
 			if i == 0 {
 				return "", ErrInvalidString
 			}
