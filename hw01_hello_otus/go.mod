@@ -1,4 +1,4 @@
-module github.com/fixme_my_friend/hw01_hello_otus
+module github.com/andreyDanilenko/go_rof/hw02_unpack_string
 
 go 1.23
 
