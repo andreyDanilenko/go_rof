@@ -68,17 +68,11 @@ func handleDigit(runes []rune, i int, builder *strings.Builder) error {
 		return ErrInvalidString
 	}
 
-	length := len(runes)
 	curr := runes[i]
 	prev := runes[i-1]
 
 	// Если предыдущий символ — неэкранированная цифра
 	if isDigit(prev) && !(i >= 2 && runes[i-2] == '\\') {
-		return ErrInvalidString
-	}
-
-	// Если следующая цифра тоже цифра и неэкранирована
-	if i+1 < length && isDigit(runes[i+1]) && !(i+1 >= 2 && runes[i-1] == '\\') {
 		return ErrInvalidString
 	}
 
