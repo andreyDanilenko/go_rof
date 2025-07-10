@@ -1,4 +1,4 @@
-module github.com/andreyDanilenko/go_rof/hw02_unpack_string
+module github.com/andreyDanilenko/go_rof/hw04_lru_cache
 
 go 1.23
 
