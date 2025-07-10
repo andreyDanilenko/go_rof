@@ -8,7 +8,7 @@ type Cache interface {
 	Clear()
 }
 
-// cacheItem хранит ключ и значение элемента кэша
+// cacheItem хранит ключ и значение элемента кэша.
 type cacheItem struct {
 	key   Key         // Ключ нужен для удаления из map при выталкивании
 	value interface{} // Само значение элемента
@@ -20,14 +20,14 @@ type LruCache struct {
 	Items    map[Key]*ListItem // Словарь для быстрого доступа к элементам
 }
 
-// lruCache реализует LRU-кэш
+// lruCache реализует LRU-кэш.
 type lruCache struct {
 	capacity int               // Максимальная ёмкость кэша
 	queue    List              // Очередь на основе двусвязного списка
 	items    map[Key]*ListItem // Словарь для быстрого доступа к элементам
 }
 
-// NewCache создаёт новый LRU-кэш заданной ёмкости
+// NewCache создаёт новый LRU-кэш заданной ёмкости.
 func NewCache(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
