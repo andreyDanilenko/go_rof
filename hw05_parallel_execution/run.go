@@ -70,24 +70,3 @@ func Run(tasks []Task, n, m int) error {
 	log.Printf("Run завершен")
 	return nil
 }
-
-func CreateTestTasks() []Task {
-	return []Task{
-		func() error {
-			log.Printf("Задача 1 выполняется")
-			return errors.New("ошибка выполнения 1 задачи")
-		},
-		func() error {
-			log.Printf("Задача 2 выполняется")
-			return nil
-		},
-		func() error {
-			log.Printf("Задача 3 выполняется")
-			return nil
-		},
-		func() error {
-			log.Printf("Задача 4 выполняется")
-			return nil
-		},
-	}
-}
