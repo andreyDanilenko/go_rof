@@ -3,7 +3,6 @@ package hw05parallelexecution
 import (
 	"errors"
 	"log"
-	"time"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -14,40 +13,60 @@ type Task func() error
 func Run(tasks []Task, n, m int) error {
 	log.Printf("Starting: %d tasks, %d workers, %d max errors", len(tasks), n, m)
 
-	tasksChan := make(chan Task)
+	type taskWithID struct {
+		id   int
+		task Task
+	}
+
+	tasksChan := make(chan taskWithID)
+	resultsChan := make(chan error, len(tasks))
 
 	// Запускаем n воркеров
 	for i := 0; i < n; i++ {
-		workerID := i + 1
-		go func() {
+		go func(workerID int) {
 			log.Printf("Worker %d: запущен и ждет задачи...", workerID)
 
-			for task := range tasksChan {
-				log.Printf("Worker %d: получил задачу", workerID)
-				err := task()
-				if err != nil {
-					log.Printf("Worker %d: ошибка - %v", workerID, err)
-				} else {
-					log.Printf("Worker %d: задача выполнена успешно", workerID)
-				}
+			// Запускается бесконечный цикл ожидания задач из канала
+			for taskItem := range tasksChan {
+				log.Printf("Worker %d: получил задачу %d", workerID, taskItem.id)
+				resultsChan <- taskItem.task()
 			}
 
 			log.Printf("Worker %d: завершил работу", workerID)
-		}()
+		}(i + 1)
 	}
 
 	// Отправляем задачи в канал с номерами
-	log.Printf("Отправляю задачи в канал...")
-	for i, task := range tasks {
-		taskNumber := i + 1
-		log.Printf("Отправляю задачу %d в канал", taskNumber)
-		tasksChan <- task
+	go func() {
+		for i, task := range tasks {
+			taskNumber := i + 1
+			tasksChan <- taskWithID{task: task, id: taskNumber}
+		}
+		close(tasksChan)
+	}()
+
+	errorCount := 0
+	completedTask := 0
+
+	// Ловим результат и ошибки
+	for i := 0; i < len(tasks); i++ {
+		result := <-resultsChan
+
+		if result != nil {
+			errorCount++
+			if m > 0 && errorCount >= m {
+				log.Printf("ДОСТИГНУТ ЛИМИТ %d ОШИБОК! ПРЕРЫВАЮ ВЫПОЛНЕНИЕ!", m)
+				return ErrErrorsLimitExceeded
+			}
+		}
+
+		if result == nil {
+			completedTask++
+		}
 	}
 
-	log.Printf("Все задачи отправлены, закрываю канал...")
-	close(tasksChan)
-
-	time.Sleep(1 * time.Second)
+	log.Printf("Total tasks %d %d", errorCount, completedTask)
+	// time.Sleep(1 * time.Second)
 	log.Printf("Run завершен")
 	return nil
 }
@@ -56,10 +75,18 @@ func CreateTestTasks() []Task {
 	return []Task{
 		func() error {
 			log.Printf("Задача 1 выполняется")
-			return nil
+			return errors.New("ошибка выполнения 1 задачи")
 		},
 		func() error {
 			log.Printf("Задача 2 выполняется")
+			return nil
+		},
+		func() error {
+			log.Printf("Задача 3 выполняется")
+			return nil
+		},
+		func() error {
+			log.Printf("Задача 4 выполняется")
 			return nil
 		},
 	}
