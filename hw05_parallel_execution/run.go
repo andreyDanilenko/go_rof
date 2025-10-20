@@ -2,7 +2,8 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"log"
+	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -11,7 +12,9 @@ type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	log.Printf("Starting: %d tasks, %d workers, %d max errors", len(tasks), n, m)
+	if n <= 0 {
+		return errors.New("workers count must be > 0")
+	}
 
 	type taskWithID struct {
 		id   int
@@ -19,54 +22,61 @@ func Run(tasks []Task, n, m int) error {
 	}
 
 	tasksChan := make(chan taskWithID)
-	resultsChan := make(chan error, len(tasks))
+	errChan := make(chan error)
+	done := make(chan struct{})
 
-	// Запускаем n воркеров
-	for i := 0; i < n; i++ {
-		go func(workerID int) {
-			log.Printf("Worker %d: запущен и ждет задачи...", workerID)
+	var wg sync.WaitGroup
+	var errCount int32
 
-			// Запускается бесконечный цикл ожидания задач из канала
-			for taskItem := range tasksChan {
-				log.Printf("Worker %d: получил задачу %d", workerID, taskItem.id)
-				resultsChan <- taskItem.task()
+	worker := func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-done:
+				return
+			case t, ok := <-tasksChan:
+				if !ok {
+					return
+				}
+				select {
+				case errChan <- t.task():
+				case <-done:
+					return
+				}
 			}
-
-			log.Printf("Worker %d: завершил работу", workerID)
-		}(i + 1)
+		}
 	}
 
-	// Отправляем задачи в канал с номерами
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go worker()
+	}
+
 	go func() {
 		for i, task := range tasks {
-			taskNumber := i + 1
-			tasksChan <- taskWithID{task: task, id: taskNumber}
+			select {
+			case <-done:
+				return
+			case tasksChan <- taskWithID{i, task}:
+			}
 		}
 		close(tasksChan)
 	}()
 
-	errorCount := 0
-	completedTask := 0
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
 
-	// Ловим результат и ошибки
-	for i := 0; i < len(tasks); i++ {
-		result := <-resultsChan
-
-		if result != nil {
-			errorCount++
-			if m > 0 && errorCount >= m {
-				log.Printf("ДОСТИГНУТ ЛИМИТ %d ОШИБОК! ПРЕРЫВАЮ ВЫПОЛНЕНИЕ!", m)
+	for err := range errChan {
+		if err != nil {
+			if m > 0 && atomic.AddInt32(&errCount, 1) >= int32(m) {
+				close(done)
+				wg.Wait()
 				return ErrErrorsLimitExceeded
 			}
 		}
-
-		if result == nil {
-			completedTask++
-		}
 	}
 
-	log.Printf("Total tasks %d %d", errorCount, completedTask)
-	// time.Sleep(1 * time.Second)
-	log.Printf("Run завершен")
 	return nil
 }
