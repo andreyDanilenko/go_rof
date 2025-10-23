@@ -25,10 +25,12 @@ func Run(tasks []Task, n, m int) error {
 		go func() {
 			defer wg.Done()
 			for task := range tasksChan {
-				if err := task(); err != nil {
+				if err := task(); err != nil && errCount < m {
 					mu.Lock()
 					errCount++
 					mu.Unlock()
+				} else if errCount >= m {
+					return
 				}
 			}
 		}()
