@@ -43,7 +43,6 @@ func Run(tasks []Task, n, m int) error {
 			break
 		}
 		mu.Unlock()
-
 	}
 
 	close(tasksChan)
