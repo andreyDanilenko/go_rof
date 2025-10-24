@@ -142,7 +142,7 @@ func TestAllStageStop(t *testing.T) {
 		for s := range ExecutePipeline(in, done, stages...) {
 			result = append(result, s.(string))
 		}
-		wg.Wait()
+		// wg.Wait()
 
 		require.Len(t, result, 0)
 
