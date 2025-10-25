@@ -20,20 +20,28 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 
 func LayerStage(stage Stage, current In, done In) Out {
 	out := make(Bi)
-	stageOut := stage(current)
+	layerCurrent := make(Bi)
 
 	go func() {
-		defer close(out)
-
-		for {
+		defer close(layerCurrent)
+		for v := range current {
 			select {
 			case <-done:
 				return
-			case value, ok := <-stageOut:
-				if !ok {
-					return
-				}
-				out <- value
+			case layerCurrent <- v:
+			}
+		}
+	}()
+
+	stageOut := stage(layerCurrent)
+
+	go func() {
+		defer close(out)
+		for v := range stageOut {
+			select {
+			case <-done:
+				return
+			case out <- v:
 			}
 		}
 	}()
