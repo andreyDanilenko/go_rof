@@ -24,11 +24,19 @@ func LayerStage(stage Stage, current In, done In) Out {
 
 	go func() {
 		defer close(layerCurrent)
-		for v := range current {
+		for {
 			select {
+			case v, ok := <-current:
+				if !ok {
+					return
+				}
+				select {
+				case <-done:
+					return
+				case layerCurrent <- v:
+				}
 			case <-done:
 				return
-			case layerCurrent <- v:
 			}
 		}
 	}()
