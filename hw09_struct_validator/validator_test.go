@@ -48,6 +48,20 @@ func TestValidate(t *testing.T) {
 		// Place your code here.
 	}
 
+	user := User{
+		ID:     "12345678-1234-1234-1234-123456789012",
+		Name:   "John",
+		Age:    25,
+		Email:  "johnexam",
+		Role:   "admin",
+		Phones: []string{"79001234567"},
+	}
+
+	err := Validate(user)
+	if err != nil {
+		t.Errorf("Ошибка валидации: %v", err)
+	}
+
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
