@@ -73,22 +73,20 @@ func Validate(v interface{}) error {
 // slice =>
 
 func validateField(fieldValue reflect.Value, validateTag string) error {
-	fmt.Printf("Валидирую поле типа %v с тегом: %s\n",
-		fieldValue.Kind(), validateTag)
-
+	// fmt.Printf("Валидирую поле типа %v с тегом: %s\n",
+	// 	fieldValue.Kind(), validateTag)
 	rules, _ := parseValidateTag(validateTag)
-
-	fmt.Printf("Валидирую %v с тегом: %s\n",
-		rules, validateTag)
+	// fmt.Printf("Валидирую %v с тегом: %s\n",
+	// 	rules, validateTag)
 
 	switch fieldValue.Kind() {
 	case reflect.Int:
-		value := fieldValue.Int()
-		fmt.Printf("Это %v: %v\n", fieldValue.Kind(), value)
+		// value := fieldValue.Int()
+		fmt.Printf("Это %v: %v\n", fieldValue.Kind(), fieldValue.Int())
+		return validateInt(fieldValue.String(), rules)
 	case reflect.String:
 		fmt.Printf("Это %v: %v\n", fieldValue.Kind(), fieldValue.String())
 		return validateString(fieldValue.String(), rules)
-
 	case reflect.Slice:
 		fmt.Printf("Это слайс, длина: %d\n", fieldValue.Len())
 
@@ -132,11 +130,15 @@ func parseValidateTag(validateTag string) (ValidatorRules, error) {
 	return rules, nil
 }
 
+func validateInt(value string, rules ValidatorRules) error {
+	fmt.Printf("Валидирую поле integer в validateInt %v с тегом: %s\n",
+		value, rules)
+	return nil
+}
+
 func validateString(value string, rules ValidatorRules) error {
-
 	for _, rule := range rules {
-		fmt.Println("fieldValue", rule.arg)
-
+		// fmt.Println("fieldValueString", rule.arg)
 		switch rule.name {
 		// min, max, len, regex, pattern, match
 		case "len":
@@ -149,8 +151,9 @@ func validateString(value string, rules ValidatorRules) error {
 			if len(value) != expected {
 				return fmt.Errorf("length must be %d", expected)
 			}
-		case "regex", "pattern", "match":
+		case "regexp", "pattern", "match":
 			// Компилируем регулярное выражение
+
 			re, err := regexp.Compile(rule.arg)
 			if err != nil {
 				return fmt.Errorf("invalid regex pattern: %s", rule.arg)
@@ -162,15 +165,12 @@ func validateString(value string, rules ValidatorRules) error {
 		case "min":
 			// string => int
 			min, err := strconv.Atoi(rule.arg)
-
-			fmt.Println("fieldValue", min)
-
 			if err != nil {
 				return fmt.Errorf("invalid rule min: %s", rule.arg)
 			}
 
 			if len(value) < min {
-				return fmt.Errorf("length must be at least %d", min)
+				return fmt.Errorf("length must be at more %d", min)
 			}
 
 		case "max":
@@ -179,13 +179,30 @@ func validateString(value string, rules ValidatorRules) error {
 				return fmt.Errorf("invalid rule max: %s", rule.arg)
 			}
 
-			if len(value) < max {
-				return fmt.Errorf("length must be at least %d", max)
+			if len(value) > max {
+				return fmt.Errorf("length must be at less %d", max)
 			}
 		case "in":
+			options := strings.Split(rule.arg, ",")
+			for i, opt := range options {
+				options[i] = strings.TrimSpace(opt)
+			}
 
+			if !containsForSlice(options, value) {
+				return fmt.Errorf("field is invalid in %s", value)
+			}
 		}
 	}
 
 	return nil
+}
+
+func containsForSlice[T comparable](slice []T, item T) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+
+	return false
 }
