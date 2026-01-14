@@ -83,7 +83,7 @@ func validateField(fieldValue reflect.Value, validateTag string) error {
 	case reflect.Int:
 		// value := fieldValue.Int()
 		fmt.Printf("Это %v: %v\n", fieldValue.Kind(), fieldValue.Int())
-		return validateInt(fieldValue.String(), rules)
+		return validateInt(fieldValue.Int(), rules)
 	case reflect.String:
 		fmt.Printf("Это %v: %v\n", fieldValue.Kind(), fieldValue.String())
 		return validateString(fieldValue.String(), rules)
@@ -130,9 +130,43 @@ func parseValidateTag(validateTag string) (ValidatorRules, error) {
 	return rules, nil
 }
 
-func validateInt(value string, rules ValidatorRules) error {
+func validateInt(value int64, rules ValidatorRules) error {
 	fmt.Printf("Валидирую поле integer в validateInt %v с тегом: %s\n",
 		value, rules)
+	for _, rule := range rules {
+		switch rule.name {
+		case "len":
+			len, err := strconv.ParseInt(rule.arg, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid len: %s", rule.arg)
+			}
+
+			if value != len {
+				return fmt.Errorf("length must be %d", len)
+			}
+		case "min":
+			// string => int
+			min, err := strconv.ParseInt(rule.arg, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid rule min: %s", rule.arg)
+			}
+
+			if value < min {
+				return fmt.Errorf("length must be at more %d", min)
+			}
+
+		case "max":
+			max, err := strconv.ParseInt(rule.arg, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid rule max: %s", rule.arg)
+			}
+
+			if value > max {
+				return fmt.Errorf("length must be at less %d", max)
+			}
+		}
+	}
+
 	return nil
 }
 
