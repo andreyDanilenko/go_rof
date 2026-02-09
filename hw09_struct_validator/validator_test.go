@@ -11,10 +11,10 @@ type UserRole string
 // Test the function on different structures and other types.
 type (
 	User struct {
-		ID     string `json:"id" validate:"len:36"`
-		Name   string
+		ID     string          `json:"id" validate:"len:36"`
+		Name   string          `validate:"min:2|max:10"`
 		Age    int             `validate:"min:18|max:50"`
-		Email  string          `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
+		Email  string          `validate:"regexp:^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"`
 		Role   UserRole        `validate:"in:admin,stuff"`
 		Phones []string        `validate:"len:11"`
 		meta   json.RawMessage //nolint:unused
@@ -46,6 +46,20 @@ func TestValidate(t *testing.T) {
 		},
 		// ...
 		// Place your code here.
+	}
+
+	user := User{
+		ID:     "12345678-1234-1234-1234-123456789012",
+		Name:   "Jow",
+		Age:    25,
+		Email:  "example@gmail.ru",
+		Role:   "admin",
+		Phones: []string{"79001234567"},
+	}
+
+	err := Validate(user)
+	if err != nil {
+		t.Errorf("Ошибка валидации: %v", err)
 	}
 
 	for i, tt := range tests {
